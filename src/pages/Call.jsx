@@ -55,12 +55,13 @@ export default function Call() {
   const getUserMediaStream = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
+      video: true,
     });
 
-    // send myStream
-    sendStream(myStream);
+    // // send myStream
+    // sendStream(myStream);
     setMyStream(stream);
-  }, [myStream, sendStream]);
+  }, []);
 
   useEffect(() => {
     getUserMediaStream();
@@ -70,7 +71,7 @@ export default function Call() {
     <div>
       {`Connected to ${remoteEmailId}`}
       <ReactPlayer url={myStream} playing muted />
-      <ReactPlayer url={remoteStream} playing />
+      {/* <ReactPlayer url={remoteStream} playing /> */}
     </div>
   );
 }
