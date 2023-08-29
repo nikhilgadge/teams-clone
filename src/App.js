@@ -1,25 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import { Route, Routes } from "react-router-dom";
+import Layout from "./components/Layout";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import RequireAuth from "./components/RequireAuth";
+import Home from "./pages/Home";
+import Admin from "./pages/Admin";
+import Coach from "./pages/Coach";
+import Agent from "./pages/Agent";
+import PersistLogin from "./components/PersistLogin";
+import Call from "./pages/Call";
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        {/* public routes */}
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        {/* <Route path="unauthorized" element={<Unauthorized />} /> */}
+
+        {/* we want to protect these routes */}
+        <Route element={<PersistLogin />}>
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<Home />} />
+            <Route path="admin" element={<Admin />} />
+            <Route path="coach" element={<Coach />} />
+            <Route path="agent" element={<Agent />} />
+            <Route path="call" element={<Call />} />
+          </Route>
+        </Route>
+      </Route>
+    </Routes>
   );
 }
-
-export default App;
