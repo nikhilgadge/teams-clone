@@ -7,6 +7,7 @@ export const AuthProvider = (props) => {
   const [auth, setAuth] = useState();
   const [persist, setPersist] = useLocalStorage("persist", false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [remoteEmailId, setRemoteEmailId] = useState(null);
 
   return (
     <AuthContext.Provider
@@ -17,6 +18,8 @@ export const AuthProvider = (props) => {
         setPersist,
         setIsSocketConnected,
         isSocketConnected,
+        remoteEmailId,
+        setRemoteEmailId,
       }}
     >
       {props.children}

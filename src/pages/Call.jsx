@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import useSocket from "../hooks/useSocket";
-import usePeer from "../hooks/usePeer";
 import ReactPlayer from "react-player";
+import peer from "../services/peer";
+import useAuth from "../hooks/useAuth";
 
 export default function Call() {
   const { socket } = useSocket();
 
-  const { remoteEmailId, peer } = usePeer();
-
   const [myStream, setMyStream] = useState();
   const [remoteStream, setRemoteStream] = useState();
+  const { remoteEmailId } = useAuth();
 
   const handleNegociationNeeded = useCallback(async () => {
     console.log("Negociation needed");
@@ -17,38 +17,38 @@ export default function Call() {
     const offer = await peer.createOffer();
 
     socket.emit("negotiationneeded", { offer, toEmail: remoteEmailId });
-  }, [peer, socket, remoteEmailId]);
+  }, [socket, remoteEmailId]);
 
   useEffect(() => {
-    peer.addEventListener("negotiationneeded", handleNegociationNeeded);
+    peer.peer.addEventListener("negotiationneeded", handleNegociationNeeded);
 
     return () => {
-      peer.removeEventListener("negotiationneeded", handleNegociationNeeded);
+      peer.peer.removeEventListener(
+        "negotiationneeded",
+        handleNegociationNeeded
+      );
     };
   }, [handleNegociationNeeded]);
 
-  const sendTrackToConnectedPeer = useCallback(() => {
-    for (const track of myStream.getTracks()) {
-      peer.addTrack(track, myStream);
+  const sendTrackToConnectedPeer = useCallback((stream) => {
+    for (const track of stream.getTracks()) {
+      peer.peer.addTrack(track, stream);
     }
-  }, [myStream]);
+  }, []);
 
-  const handleCallAccepted = useCallback(
-    async (data) => {
-      const { answer } = data;
+  const handleCallAccepted = useCallback(async (data) => {
+    const { answer } = data;
 
-      console.log("answer", answer);
+    console.log("answer", answer);
 
-      //   set this answer to our remote description
-      await peer.setRemoteAnswer(answer);
+    //   set this answer to our remote description
+    await peer.setRemoteAnswer(answer);
 
-      // send your stream to other connected peer
-      sendTrackToConnectedPeer();
+    // send your stream to other connected peer
+    // sendTrackToConnectedPeer(myStream);
 
-      console.log("Call accepted");
-    },
-    [sendTrackToConnectedPeer]
-  );
+    console.log("Call accepted");
+  }, []);
 
   const onNegotiationIncomming = useCallback(
     async ({ fromEmail, offer }) => {
@@ -74,7 +74,7 @@ export default function Call() {
     return () => {
       socket.off("call-accepted", handleCallAccepted);
       socket.off("negotiationneeded", onNegotiationIncomming);
-      socket.on("negotiation-accpeted", onNegotiationAccepted);
+      socket.off("negotiation-accpeted", onNegotiationAccepted);
     };
   }, [
     handleCallAccepted,
@@ -84,16 +84,19 @@ export default function Call() {
   ]);
 
   const trackListner = (event) => {
+    console.log("Got track");
+
     const remoteStream = event.streams;
+
     setRemoteStream(remoteStream[0]);
   };
 
   useEffect(() => {
     // event listener if we get tracks from connected peer
-    peer.addEventListener("track", trackListner);
-
+    peer.peer.addEventListener("track", trackListner);
+    // dw
     return () => {
-      peer.removeEventListener("track", trackListner);
+      peer.peer.removeEventListener("track", trackListner);
     };
   }, []);
 
@@ -103,10 +106,11 @@ export default function Call() {
       video: true,
     });
 
-    // // send myStream
-    // sendStream(myStream);
+    // send your stream to other connected peer
+    sendTrackToConnectedPeer(stream);
+
     setMyStream(stream);
-  }, []);
+  }, [sendTrackToConnectedPeer]);
 
   useEffect(() => {
     getUserMediaStream();
@@ -116,13 +120,20 @@ export default function Call() {
     <div>
       {`Connected to ${remoteEmailId}`}
       <p>My Stream</p>
-      {myStream && <ReactPlayer url={myStream} playing muted />}
-      <p>Remote Stream</p>
-      {remoteStream && (
-        <button onClick={sendTrackToConnectedPeer}>Send Stream</button>
+      {myStream && (
+        <ReactPlayer
+          url={myStream}
+          playing
+          muted
+          height="200px"
+          width="200px"
+        />
       )}
+      <p>Remote Stream</p>
 
-      {remoteStream && <ReactPlayer url={remoteStream} playing />}
+      {remoteStream && (
+        <ReactPlayer url={remoteStream} playing height="200px" width="200px" />
+      )}
     </div>
   );
 }

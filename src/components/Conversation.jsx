@@ -3,13 +3,12 @@ import RecievedMessage from "./RecievedMessage";
 import SentMessage from "./SentMessage";
 import ProfileList from "./ProfileList";
 import useAuth from "../hooks/useAuth";
-import usePeer from "../hooks/usePeer";
-
 import useSocket from "../hooks/useSocket";
 import moment from "moment";
 import FileProcess from "./FileProcess";
 import uuid from "react-uuid";
 import { useNavigate } from "react-router-dom";
+import peer from "../services/peer";
 
 export default function Conversation({
   conversation,
@@ -21,8 +20,7 @@ export default function Conversation({
   const { socket } = useSocket();
   const navigate = useNavigate();
 
-  const { auth } = useAuth();
-  const { setRemoteEmailId, peer } = usePeer();
+  const { auth, setRemoteEmailId } = useAuth();
 
   const ref = useRef(null);
 

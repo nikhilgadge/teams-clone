@@ -3,15 +3,15 @@ import useAuth from "../hooks/useAuth";
 import io from "socket.io-client";
 import useChat from "../hooks/useChat";
 import { useNavigate } from "react-router-dom";
-import usePeer from "../hooks/usePeer";
+import peer from "../services/peer";
 export const SocketContext = createContext();
 
 export const SocketProvider = (props) => {
   const [socket, setSocket] = useState();
   const { setConversations, setMembersStatus, setSelectedConversation } =
     useChat();
-  const { auth, setIsSocketConnected } = useAuth();
-  const { setRemoteEmailId, peer } = usePeer();
+  const { auth, setIsSocketConnected, setRemoteEmailId } = useAuth();
+
   const navigate = useNavigate();
 
   const emit = (event, arg) => {
@@ -73,13 +73,8 @@ export const SocketProvider = (props) => {
             });
           });
 
-          socket.on("chunkUploaded", (data) => {
-            console.log(data);
-          });
-
           // webrtc
           socket.on("incoming-call", async (data) => {
-            debugger;
             const { offer, fromEmail, roomId } = data;
 
             // create answer

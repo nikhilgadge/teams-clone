@@ -14,37 +14,29 @@ class PeerService {
     }
   }
 
-  createOffer = async () => {
-    // create offer
-    if (this.peer) return null;
+  async createAnswer(offer) {
+    if (this.peer) {
+      await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+      const ans = await this.peer.createAnswer();
+      await this.peer.setLocalDescription(ans);
+      return ans;
+    }
+  }
 
-    const offer = await this.peer.createOffer();
+  async setRemoteAnswer(ans) {
+    if (this.peer) {
+      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
+    }
+  }
 
-    // set this offer to our local discription
-    await this.peer.setLocalDescription(new RTCSessionDescription(offer));
-
-    return offer;
-  };
-
-  createAnswer = async (offer) => {
-    if (!this.peer) return null;
-    // set offer coming from other user as our remote descriptio
-    await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
-
-    // create answer
-    const answer = await this.peer.createAnswer();
-
-    // set this answer as our local description
-    await this.peer.setLocalDescription(new RTCSessionDescription(answer));
-
-    return answer;
-  };
-
-  setRemoteAnswer = async (answer) => {
-    if (!this.peer) return;
-
-    await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
-  };
+  async createOffer() {
+    if (this.peer) {
+      const offer = await this.peer.createOffer();
+      await this.peer.setLocalDescription(offer);
+      return offer;
+    }
+  }
 }
 
-export default PeerService;
+// eslint-disable-next-line import/no-anonymous-default-export
+export default new PeerService();
