@@ -4,7 +4,6 @@ import io from "socket.io-client";
 import useChat from "../hooks/useChat";
 import { useNavigate } from "react-router-dom";
 import usePeer from "../hooks/usePeer";
-
 export const SocketContext = createContext();
 
 export const SocketProvider = (props) => {
@@ -12,7 +11,7 @@ export const SocketProvider = (props) => {
   const { setConversations, setMembersStatus, setSelectedConversation } =
     useChat();
   const { auth, setIsSocketConnected } = useAuth();
-  const { createAnswer, setRemoteEmailId } = usePeer();
+  const { setRemoteEmailId, peer } = usePeer();
   const navigate = useNavigate();
 
   const emit = (event, arg) => {
@@ -41,6 +40,7 @@ export const SocketProvider = (props) => {
           socket.on("disconnect", () => {
             setIsSocketConnected(false);
           });
+
           socket.on("recieve", ({ data, isNewConversation, tempId }) => {
             console.log("recieve event triggered");
             setConversations((prevConversations) => {
@@ -79,14 +79,15 @@ export const SocketProvider = (props) => {
 
           // webrtc
           socket.on("incoming-call", async (data) => {
+            debugger;
             const { offer, fromEmail, roomId } = data;
 
             // create answer
             // send answer i.e accept call
-            console.log(offer);
+            console.log("offer", offer);
 
             socket.emit("accept-call", {
-              answer: await createAnswer(offer),
+              answer: await peer.createAnswer(offer),
               roomId,
               toEmail: fromEmail,
             });
@@ -109,7 +110,6 @@ export const SocketProvider = (props) => {
     setMembersStatus,
     setSelectedConversation,
     setIsSocketConnected,
-    createAnswer,
     navigate,
     setRemoteEmailId,
   ]);

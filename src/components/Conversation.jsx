@@ -10,6 +10,7 @@ import moment from "moment";
 import FileProcess from "./FileProcess";
 import uuid from "react-uuid";
 import { useNavigate } from "react-router-dom";
+
 export default function Conversation({
   conversation,
   selectedConversation,
@@ -21,7 +22,7 @@ export default function Conversation({
   const navigate = useNavigate();
 
   const { auth } = useAuth();
-  const { createOffer, setRemoteEmailId } = usePeer();
+  const { setRemoteEmailId, peer } = usePeer();
 
   const ref = useRef(null);
 
@@ -35,7 +36,7 @@ export default function Conversation({
       {
         roomId: uuid(),
         emailId: conversation.members[0],
-        offer: await createOffer(),
+        offer: await peer.createOffer(),
       },
       () => {
         // call initiated
