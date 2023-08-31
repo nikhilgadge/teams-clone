@@ -16,7 +16,7 @@ class PeerService {
 
   async createAnswer(offer) {
     if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+      await this.peer.setRemoteDescription(offer);
       const ans = await this.peer.createAnswer();
       await this.peer.setLocalDescription(ans);
       return ans;
@@ -24,8 +24,12 @@ class PeerService {
   }
 
   async setRemoteAnswer(ans) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
+    try {
+      if (this.peer) {
+        await this.peer.setRemoteDescription(ans);
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
@@ -34,6 +38,18 @@ class PeerService {
       const offer = await this.peer.createOffer();
       await this.peer.setLocalDescription(offer);
       return offer;
+    }
+  }
+
+  async handleCandidate(candidate) {
+    debugger;
+
+    if (this.peer && !candidate) {
+      await this.peer.addIceCandidate(null);
+    }
+
+    if (this.peer && candidate) {
+      await this.peer.addIceCandidate(candidate);
     }
   }
 }

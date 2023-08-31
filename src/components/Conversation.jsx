@@ -17,7 +17,7 @@ export default function Conversation({
 }) {
   const [message, setMessage] = useState("");
   const [fileUploading, setFileUploading] = useState([]);
-  const { socket } = useSocket();
+  const { socket, setMyStream } = useSocket();
   const navigate = useNavigate();
 
   const { auth, setRemoteEmailId } = useAuth();
