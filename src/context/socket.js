@@ -1,9 +1,8 @@
-import { createContext, useCallback, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import useAuth from "../hooks/useAuth";
 import io from "socket.io-client";
 import useChat from "../hooks/useChat";
-import { useNavigate } from "react-router-dom";
-import peer from "../services/peer";
+import { useLocation, useNavigate } from "react-router-dom";
 export const SocketContext = createContext();
 
 export const SocketProvider = (props) => {
@@ -17,6 +16,7 @@ export const SocketProvider = (props) => {
     useAuth();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const emit = (event, arg) => {
     socket.emit(event, arg, (err) => {
@@ -27,54 +27,6 @@ export const SocketProvider = (props) => {
       }
     });
   };
-
-  const handleNegociationNeeded = useCallback(async () => {
-    console.log("Negociation needed");
-
-    const offer = await peer.createOffer();
-
-    socket?.emit("negotiationneeded", { offer, toEmail: remoteEmailId });
-  }, [remoteEmailId, socket]);
-
-  const handleOnTrack = useCallback((event) => {
-    console.log("Got tracks");
-    debugger;
-
-    const remoteStream = event.streams[0];
-
-    setRemoteStream(remoteStream);
-  }, []);
-
-  const handleIceCandidate = useCallback(
-    async (event) => {
-      socket?.emit("ice-candidate", {
-        toEmail: remoteEmailId,
-        candidate: event.candidate,
-      });
-    },
-    [remoteEmailId, socket]
-  );
-
-  useEffect(() => {
-    // event listener if we get tracks from connected peer
-    console.log("useEffect addEventListener track");
-
-    peer.peer.addEventListener("negotiationneeded", handleNegociationNeeded);
-
-    peer.peer.addEventListener("track", handleOnTrack);
-
-    peer.peer.addEventListener("icecandidate", handleIceCandidate);
-
-    return () => {
-      peer.peer.removeEventListener(
-        "negotiationneeded",
-        handleNegociationNeeded
-      );
-      peer.peer.removeEventListener("track", handleOnTrack);
-
-      peer.peer.removeEventListener("icecandidate", handleIceCandidate);
-    };
-  }, [handleIceCandidate, handleNegociationNeeded, handleOnTrack]);
 
   useEffect(() => {
     if (auth?.accessToken) {
@@ -125,92 +77,13 @@ export const SocketProvider = (props) => {
             });
           });
 
-          // webrtc
-          socket.on("incoming-call", async (data) => {
-            const { offer, fromEmail, roomId } = data;
+          socket.on("incoming-call", ({ roomID, fromEmail }) => {
+            debugger;
+            const path = location.pathname;
+            if (path.startsWith("/call/")) return;
 
-            // create answer
-            // send answer i.e accept call
-            console.log("offer", offer);
-
-            socket.emit("accept-call", {
-              answer: await peer.createAnswer(offer),
-              roomId,
-              toEmail: fromEmail,
-            });
-
-            console.log("Incoming call");
             setRemoteEmailId(fromEmail);
-
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: true,
-            });
-
-            setMyStream(stream);
-
-            navigate("/call");
-          });
-
-          socket.on("call-accepted", async (data) => {
-            debugger;
-
-            const { answer, fromEmail } = data;
-
-            console.log("answer", answer);
-
-            //   set this answer to our remote description
-            await peer.setRemoteAnswer(answer);
-
-            // ready now
-
-            socket.emit("ready", { toEmail: fromEmail });
-
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: true,
-            });
-
-            setMyStream(stream);
-            stream
-              ?.getTracks()
-              .forEach((track) => peer.peer.addTrack(track, stream));
-
-            console.log("Call accepted");
-          });
-
-          socket.on("negotiationneeded", async ({ fromEmail, offer }) => {
-            console.log("onNegotiationIncomming");
-
-            const answer = await peer.createAnswer(offer);
-
-            socket.emit("negotiation-accpeted", { answer, toEmail: fromEmail });
-          });
-
-          // negotiation-accpeted
-          socket.on("negotiation-accpeted", async ({ answer, fromEmail }) => {
-            console.log("onNegotiationAccepted");
-
-            await peer.setRemoteAnswer(answer);
-          });
-
-          socket.on("ready", async () => {
-            debugger;
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: true,
-            });
-
-            setMyStream(stream);
-            stream
-              ?.getTracks()
-              .forEach((track) => peer.peer.addTrack(track, stream));
-          });
-
-          socket.on("ice-candidate", async (data) => {
-            const { candidate } = data;
-
-            await peer.handleCandidate(candidate);
+            navigate(`call/${roomID}`);
           });
         }
 
@@ -229,6 +102,7 @@ export const SocketProvider = (props) => {
     setRemoteEmailId,
     remoteEmailId,
     myStream,
+    location.pathname,
   ]);
 
   return (

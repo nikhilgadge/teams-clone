@@ -26,7 +26,7 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="coach" element={<Coach />} />
             <Route path="agent" element={<Agent />} />
-            <Route path="call" element={<Call />} />
+            <Route path="call/:roomID" element={<Call />} />
           </Route>
         </Route>
       </Route>

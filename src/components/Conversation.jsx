@@ -8,7 +8,6 @@ import moment from "moment";
 import FileProcess from "./FileProcess";
 import uuid from "react-uuid";
 import { useNavigate } from "react-router-dom";
-import peer from "../services/peer";
 
 export default function Conversation({
   conversation,
@@ -17,34 +16,22 @@ export default function Conversation({
 }) {
   const [message, setMessage] = useState("");
   const [fileUploading, setFileUploading] = useState([]);
-  const { socket, setMyStream } = useSocket();
-  const navigate = useNavigate();
+  const { socket } = useSocket();
 
   const { auth, setRemoteEmailId } = useAuth();
 
   const ref = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (ref) ref?.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
 
   const handleInitiateCall = async () => {
-    socket.emit(
-      "initiate-call",
-      {
-        roomId: uuid(),
-        emailId: conversation.members[0],
-        offer: await peer.createOffer(),
-      },
-      () => {
-        // call initiated
+    const id = uuid();
+    setRemoteEmailId(conversation.members[0]);
 
-        console.log("Call initiated");
-        setRemoteEmailId(conversation.members[0]);
-
-        navigate("/call");
-      }
-    );
+    navigate(`/call/${id}`);
   };
 
   const isNewConversation = conversation?.messages?.length === 0;
